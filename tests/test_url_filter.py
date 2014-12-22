@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from replayreqs.url_filter import URLFilter
-from replayreqs.log_constants import LogConstants
+from replayer.url_filter import URLFilter
+from replayer.log_constants import LogConstants
 
 
 class TestURLFilter(TestCase):
