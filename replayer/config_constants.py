@@ -1,0 +1,11 @@
+class ConfigConstants(object):
+    HOST = 'host'
+    STATUS = 'status'
+    METHODS = 'methods'
+    HEADER = 'header'
+    TRANSFORM = 'transform'
+    LOGFORMAT = 'log_format'
+    THREADCOUNT = 'thread_count'
+    LOGFILE = 'log_file'
+    VERBOSE = 'verbose'
+    CONFIGFILE = 'config_file'

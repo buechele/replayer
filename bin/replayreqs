@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+""" Main module of replayreqs.
+"""
+
+import argparse
+import apachelog
+import Queue
+import logging
+import sys
+import os.path
+
+from replayreqs.config_reader import ConfigReader
+from replayreqs.http_worker import HTTPWorker
+from replayreqs.url_filter import URLFilter
+from replayreqs.url_builder import URLBuilder
+from replayreqs.config_constants import ConfigConstants
+from replayreqs.response_inspector import ResponseInspector
+
+# parse command line args
+parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
+parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
+parser.add_argument('-n', dest=ConfigConstants.THREADCOUNT, type=int, help='Concurrency level', default=1,
+                    required=False)
+parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
+                    required=False)
+parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
+parser.add_argument('--host', dest=ConfigConstants.HOST, help='Host to use', required=False)
+args = vars(parser.parse_args())
+
+# read config file
+config_reader = ConfigReader(args[ConfigConstants.CONFIGFILE])
+config_reader.merge_dict(args)
+config = config_reader.get_config()
+
+if config[ConfigConstants.VERBOSE]:
+    logging.basicConfig(level=logging.DEBUG)
+
+# check if access log exists
+if not os.path.isfile(config[ConfigConstants.LOGFILE]):
+    print >> sys.stderr, 'log file ' + config[ConfigConstants.LOGFILE] + ' does not exist'
+    sys.exit(1)
+
+# initialize worker objects
+parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
+url_queue = Queue.Queue(config[ConfigConstants.THREADCOUNT] * 10)
+url_builder = URLBuilder(config[ConfigConstants.HOST], config[ConfigConstants.TRANSFORM])
+url_filter = URLFilter(config[ConfigConstants.STATUS], config[ConfigConstants.METHODS])
+
+# init and start threads
+thread_list = []
+for i in range(config[ConfigConstants.THREADCOUNT]):
+    t = HTTPWorker(i + 1, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
+    thread_list.append(t)
+    t.start()
+
+# read access log
+for line in open(config[ConfigConstants.LOGFILE]):
+    try:
+        data = parser.parse(line)
+        url_queue.put(data, True)
+    except:
+        logging.error("Unable to parse %s" % line)
+
+inspector = ResponseInspector()
+
+# close threads
+for t in thread_list:
+    t.stop()
+    t.join()
+    inspector += t.get_inspector()
+
+# print results
+print inspector
