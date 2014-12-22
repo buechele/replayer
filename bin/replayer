@@ -9,12 +9,12 @@ import logging
 import sys
 import os.path
 
-from replayreqs.config_reader import ConfigReader
-from replayreqs.http_worker import HTTPWorker
-from replayreqs.url_filter import URLFilter
-from replayreqs.url_builder import URLBuilder
-from replayreqs.config_constants import ConfigConstants
-from replayreqs.response_inspector import ResponseInspector
+from replayer.config_reader import ConfigReader
+from replayer.http_worker import HTTPWorker
+from replayer.url_filter import URLFilter
+from replayer.url_builder import URLBuilder
+from replayer.config_constants import ConfigConstants
+from replayer.response_inspector import ResponseInspector
 
 # parse command line args
 parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
