@@ -4,7 +4,7 @@ import os
 from log_constants import LogConstants
 
 
-class ResponseInspector(object):
+class Inspector(object):
     def __init__(self):
         self.__count = 0
         self.__status_match = 0
@@ -17,20 +17,12 @@ class ResponseInspector(object):
         return self
 
     def __str__(self):
-        result = '[Result]' + os.linesep
+        result = '[Overview]' + os.linesep
         result += 'Requests: ' + str(self.__count) + os.linesep
-
-        if self.__status_match == self.__count:
-            result += 'Same status codes delivered from replay as in the Apache log file.'
-        else:
-            result += "Status codes matched: " + str(self.__status_match) + os.linesep
-            result += "Status codes mismatched: " + str(self.__count - self.__status_match) + os.linesep
-
-        if self.__size_match == self.__count:
-            result += 'Same size delivered from replay as in the Apache log file.'
-        else:
-            result += "Size matched: " + str(self.__size_match) + os.linesep
-            result += "Size mismatched: " + str(self.__count - self.__size_match)
+        result += '[Responses matched / mismatched]' + os.linesep
+        result += "Status codes: " + str(self.__status_match) + ' / ' + str(
+            self.__count - self.__status_match) + os.linesep
+        result += "Size: " + str(self.__size_match) + ' / ' + str(self.__count - self.__size_match)
 
         return result
 

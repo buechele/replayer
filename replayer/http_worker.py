@@ -3,7 +3,7 @@ import urllib2
 import logging
 import threading
 
-from response_inspector import ResponseInspector
+from inspector import Inspector
 
 class HTTPWorker(threading.Thread):
     def __init__(self, thread_id, headers, request_queue, url_filter, url_builder):
@@ -15,7 +15,7 @@ class HTTPWorker(threading.Thread):
         self.__url_filter = url_filter
         self.__url_builder = url_builder
         self.__do_work = True
-        self.__response_inspector = ResponseInspector()
+        self.__inspector = Inspector()
 
     def run(self):
         logging.info('Start thread ' + str(self.__thread_id))
@@ -25,14 +25,14 @@ class HTTPWorker(threading.Thread):
                 if self.__url_filter.proceed(data):
                     url = self.__url_builder.build(data)
                     response = self.__opener.open(url)
-                    self.__response_inspector.compare(url, data, response)
+                    self.__inspector.compare(url, data, response)
                     response.close()
             except Queue.Empty:
                 logging.info('Queue is empty for thread ' + str(self.__thread_id))
         logging.info('Stop thread ' + str(self.__thread_id))
 
     def get_inspector(self):
-        return self.__response_inspector
+        return self.__inspector
 
     def stop(self):
         self.__do_work = False
