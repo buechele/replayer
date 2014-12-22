@@ -10,6 +10,17 @@ setup(name='replayer',
       packages=['replayer'],
       scripts=['bin/replayer'],
       install_requires=[
-            'apachelog',
+          'apachelog',
+      ],
+      platforms='any',
+      classifiers=[
+          'Development Status :: 3 - Alpha',
+          'Environment :: Console',
+          'Intended Audience :: System Administrators',
+          'License :: OSI Approved :: MIT License',
+          'Natural Language :: English',
+          'Operating System :: OS Independent',
+          'Programming Language :: Python :: 2.7',
+          'Topic :: System :: Systems Administration'
       ],
       zip_safe=False)
