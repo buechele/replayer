@@ -61,4 +61,4 @@ valid `Transform` section).
 
 ## See also
 
-* [Apache Logging](http://httpd.apache.org/docs/2.4/mod/mod_log_config.html)
+* [Apache Module mod_log_config](http://httpd.apache.org/docs/2.4/mod/mod_log_config.html)
