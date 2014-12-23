@@ -53,7 +53,7 @@ def main():
     # initialize worker objects
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
     url_queue = Queue.Queue(config[ConfigConstants.THREADCOUNT] * 10)
-    url_builder = URLBuilder(config[ConfigConstants.HOST], config[ConfigConstants.TRANSFORM])
+    url_builder = URLBuilder("http", config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
     url_filter = URLFilter(config[ConfigConstants.STATUS], config[ConfigConstants.METHODS])
 
     # init and start threads

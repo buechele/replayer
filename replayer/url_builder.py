@@ -2,15 +2,16 @@ from log_constants import LogConstants
 
 
 class URLBuilder(object):
-    def __init__(self, host, regex_list):
-        self.__protocol = 'http'
+    def __init__(self, protocol, host, port, regex_list):
+        self.__protocol = protocol
         self.__host = host
+        self.__port = port
+        self.__url_prefix = protocol + '://' + host
         self.__regex_list = regex_list
 
     def build(self, request_data):
         request_line = request_data[LogConstants.REQUESTLINE].split(' ')
-        path = request_line[1]
-        url = self.__protocol + '://' + self.__host + path
+        url = self.__url_prefix + request_line[1]
         for regex_tuple in self.__regex_list:
             url = regex_tuple[0].sub(regex_tuple[1], url)
         return url
