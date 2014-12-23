@@ -1,5 +1,6 @@
 from log_constants import LogConstants
 
+
 class URLBuilder(object):
     def __init__(self, host, regex_list):
         self.__protocol = 'http'

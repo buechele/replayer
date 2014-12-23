@@ -1,5 +1,6 @@
 from log_constants import LogConstants
 
+
 class URLFilter(object):
     def __init__(self, codes, methods):
         self.__codes = codes

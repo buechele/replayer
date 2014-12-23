@@ -1,10 +1,10 @@
 from exceptions import IOError
 import os
 import re
-
 import ConfigParser
 
 from config_constants import ConfigConstants
+
 
 class ConfigReader(object):
     def __init__(self, config_file):
@@ -21,8 +21,8 @@ class ConfigReader(object):
         cfgparser.read(config_file)
         self.__copy_value(cfgparser, 'General', 'LogFormat', ConfigConstants.LOGFORMAT, True)
         self.__copy_value(cfgparser, 'General', 'Host', ConfigConstants.HOST)
-        self.__copy_list(cfgparser, 'Filter', 'Status', ConfigConstants.STATUS)
-        self.__copy_list(cfgparser, 'Filter', 'Methods', ConfigConstants.METHODS)
+        self.__copy_filter(cfgparser, 'Allow', 'Status', ConfigConstants.STATUS)
+        self.__copy_filter(cfgparser, 'Allow', 'Methods', ConfigConstants.METHODS)
         self.__copy_tuple(cfgparser, 'Header', ConfigConstants.HEADER)
         for section in cfgparser.sections():
             if section.startswith('Transform'):
@@ -47,7 +47,7 @@ class ConfigReader(object):
             else:
                 self.__config[target] = [named_tuple]
 
-    def __copy_list(self, config, section, option, target):
+    def __copy_filter(self, config, section, option, target):
         if config.has_option(section, option):
             value = config.get(section, option)
             self.__config[target] = value.split(",")

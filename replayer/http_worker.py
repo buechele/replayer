@@ -5,6 +5,7 @@ import threading
 
 from inspector import Inspector
 
+
 class HTTPWorker(threading.Thread):
     def __init__(self, thread_id, headers, request_queue, url_filter, url_builder):
         threading.Thread.__init__(self)
