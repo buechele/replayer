@@ -28,14 +28,14 @@ search = \;jsessionid=[^?]+
 replace =
 ```
 
-### Section `General`
+#### Section `General`
 
 | Entry     | Description |
 |-----------|-------------|
 | Host      | The host to which the requests will be send. |
 | LogFormat | The format of the Apache access.log. |
 
-### Section `Allow`
+#### Section `Allow`
 
 Requests will only take place, if the configured criteria is satisfied for the original request in the Apache access.log.
 
@@ -44,11 +44,11 @@ Requests will only take place, if the configured criteria is satisfied for the o
 | Methods   | HTTP methods which are allowed. |
 | Status    | Status codes which are allowed. |
 
-### Section `Header`
+#### Section `Header`
 
 User-defined headers which will be part of the request header.
 
-### Section `Transform`
+#### Section `Transform`
 
 Possibility to manipulate the URL before the request will take place.
 
