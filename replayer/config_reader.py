@@ -26,7 +26,7 @@ class ConfigReader(object):
         self.__copy_tuple(cfgparser, 'Header', ConfigConstants.HEADER)
         for section in cfgparser.sections():
             if section.startswith('Transform'):
-                self.__copy_regex_tuple(cfgparser, section, 'search', 'replace', ConfigConstants.TRANSFORM)
+                self.__copy_regex_tuple(cfgparser, section, 'Search', 'Replace', ConfigConstants.TRANSFORM)
 
     def __copy_tuple(self, config, section, target):
         if config.has_section(section):
