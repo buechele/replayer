@@ -18,8 +18,10 @@ from replayer.url_builder import URLBuilder
 from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
 
+
 def signal_handler(signal, frame):
-        sys.exit(0)
+    sys.exit(0)
+
 
 def main():
     # register signal handler
@@ -28,12 +30,11 @@ def main():
     # parse command line args
     parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
     parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
+    parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
     parser.add_argument('-n', dest=ConfigConstants.THREADCOUNT, type=int, help='Concurrency level', default=1,
                         required=False)
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
-    parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
-    parser.add_argument('--host', dest=ConfigConstants.HOST, help='Host to use', required=False)
     args = vars(parser.parse_args())
 
     # read config file
