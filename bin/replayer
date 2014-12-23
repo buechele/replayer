@@ -5,6 +5,7 @@
 import argparse
 import Queue
 import logging
+import signal
 import sys
 import os.path
 
@@ -17,8 +18,13 @@ from replayer.url_builder import URLBuilder
 from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
 
+def signal_handler(signal, frame):
+        sys.exit(0)
 
 def main():
+    # register signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+
     # parse command line args
     parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
     parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
