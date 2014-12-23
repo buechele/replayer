@@ -1,6 +1,6 @@
 # replayer
 
-Replay easily Apache access.logs.
+Replay easily an Apache access.log.
 
 ## Installation
 
