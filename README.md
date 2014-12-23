@@ -50,9 +50,15 @@ User-defined headers which will be part of the request header.
 
 #### Section `Transform`
 
-Possibility to manipulate the URL before the request will take place.
+Gives the ability to manipulate the URL before the request will take place. The section has to start with the string
+`Transform`, so it is possible to define multiple `Transform` sections (e.g. `Transform_remove_jsession` will be also a
+valid `Transform` section).
 
 | Entry   | Description |
 |---------|-------------|
 | Search  | String to search in request URL. Regular expressions are allowed. |
 | Replace | Replacement for Strings which are found. |
+
+## See also
+
+* [Apache Logging](http://httpd.apache.org/docs/2.4/mod/mod_log_config.html)
