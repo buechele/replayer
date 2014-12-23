@@ -42,19 +42,27 @@ def main():
     config_reader.merge_dict(args)
     config = config_reader.get_config()
 
+    # configure logging
     if config[ConfigConstants.VERBOSE]:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG, format='%(message)s')
+    else:
+        logging.basicConfig(level=logging.INFO, format='%(message)s')
 
     # check if access log exists
     if not os.path.isfile(config[ConfigConstants.LOGFILE]):
-        print >> sys.stderr, 'log file ' + config[ConfigConstants.LOGFILE] + ' does not exist'
+        logging.error('log file ' + config[ConfigConstants.LOGFILE] + ' does not exist!')
+        sys.exit(1)
+
+    # check if host is configured
+    if not config[ConfigConstants.HOST]:
+        logging.error('Host is not configured!')
         sys.exit(1)
 
     # initialize worker objects
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
     url_queue = Queue.Queue(config[ConfigConstants.THREADCOUNT] * 10)
     url_builder = URLBuilder("http", config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
-    url_filter = URLFilter(config[ConfigConstants.STATUS], config[ConfigConstants.METHODS])
+    url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
 
     # init and start threads
     thread_list = []

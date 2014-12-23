@@ -1,7 +1,9 @@
 class ConfigConstants(object):
+    FILTER = 'Filter'
+    FILTERRULE = 'Rule'
     HOST = 'host'
-    STATUS = 'status'
-    METHODS = 'methods'
+    STATUS = 'Status'
+    METHODS = 'Methods'
     HEADER = 'header'
     TRANSFORM = 'transform'
     LOGFORMAT = 'log_format'

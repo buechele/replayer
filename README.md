@@ -13,9 +13,10 @@ Here is an example configuration file:
 ```
 [General]
 Host = localhost
-LogFormat = "%h %l %u %t \"%r\" %>s %b"
+LogFormat = %h %l %u %t \"%r\" %>s %b
 
-[Allow]
+[Filter]
+Rule = allow
 Methods = GET
 Status = 200
 
@@ -35,14 +36,15 @@ replace =
 | Host      | The host to which the requests will be send. |
 | LogFormat | The format of the Apache access.log. |
 
-#### Section `Allow`
+#### Section `Filter`
 
 Requests will only take place, if the configured criteria is satisfied for the original request in the Apache access.log.
 
 | Entry     | Description |
 |-----------|-------------|
-| Methods   | HTTP methods which are allowed. |
-| Status    | Status codes which are allowed. |
+| Rule      | `allow` or `disallow` requests from access.log. Defaults to `allow`. |
+| Methods   | HTTP methods which are (dis)allowed. |
+| Status    | Status codes which are (dis)allowed. |
 
 #### Section `Header`
 
