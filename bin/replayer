@@ -19,8 +19,17 @@ from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
 
 
+
+# global variables
+thread_list = []
+killed = False
+
+# signal handler to handle ctrl-c
 def signal_handler(signal, frame):
-    sys.exit(0)
+    global killed
+    killed = True
+    for t in thread_list:
+        t.kill()
 
 
 def main():
@@ -68,19 +77,21 @@ def main():
         url_filter = URLFilter({})
 
     # init and start threads
-    thread_list = []
     for i in range(config[ConfigConstants.THREADCOUNT]):
         t = HTTPWorker(i + 1, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
         thread_list.append(t)
         t.start()
 
     logging.info('Replaying ' + config[ConfigConstants.LOGFILE] + ' (be patient)...')
+    logging.info('')
 
     # read access log
     for line in open(config[ConfigConstants.LOGFILE]):
         try:
             data = parser.parse(line)
             url_queue.put(data, True)
+            if killed:
+                break
         except:
             logging.error('Unable to parse %s' % line)
 

@@ -16,11 +16,12 @@ class HTTPWorker(threading.Thread):
         self.__url_filter = url_filter
         self.__url_builder = url_builder
         self.__do_work = True
+        self.__killed = False
         self.__inspector = Inspector()
 
     def run(self):
         logging.debug('Start thread ' + str(self.__thread_id))
-        while self.__do_work or (not self.__request_queue.empty()):
+        while (not self.__killed) and (self.__do_work or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 1)
                 if self.__url_filter.proceed(data):
@@ -43,3 +44,6 @@ class HTTPWorker(threading.Thread):
 
     def stop(self):
         self.__do_work = False
+
+    def kill(self):
+        self.__killed = True
