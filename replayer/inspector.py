@@ -60,7 +60,8 @@ class Inspector(object):
         status = str(response.getcode())
         self.inspect_status(url, log_data, status)
 
-        length = len(response.read())
+        response = response.read()
+        length = len(response)
         self.__size += length
         if str(length) == log_data[LogConstants.BYTES]:
             self.__length_match += 1

@@ -10,8 +10,7 @@ class HTTPWorker(threading.Thread):
     def __init__(self, thread_id, headers, request_queue, url_filter, url_builder):
         threading.Thread.__init__(self)
         self.__thread_id = thread_id
-        self.__opener = urllib2.build_opener()
-        self.__opener.addheaders = headers
+        self.__headers = headers
         self.__request_queue = request_queue
         self.__url_filter = url_filter
         self.__url_builder = url_builder
@@ -22,7 +21,10 @@ class HTTPWorker(threading.Thread):
     def __request(self, data):
         url = self.__url_builder.build(data)
         try:
-            response = self.__opener.open(url)
+            request = urllib2.Request(url)
+            for (key, val) in self.__headers:
+                request.add_header(key, val)
+            response = urllib2.urlopen(request)
         except urllib2.HTTPError as e:
             self.__inspector.inspect_status(url, data, str(e.code))
         except urllib2.URLError as e:
