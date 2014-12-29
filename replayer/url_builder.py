@@ -13,7 +13,7 @@ class URLBuilder(object):
         request_line = request_data[LogConstants.REQUESTLINE].split(' ')
 
         if len(request_line) < 2:
-            raise IOError('Problem with request line ' + request_data[LogConstants.REQUESTLINE])
+            raise IOError('Ignoring request with line ' + request_data[LogConstants.REQUESTLINE])
 
         url = self.__url_prefix + request_line[1]
         for regex_tuple in self.__regex_list:
