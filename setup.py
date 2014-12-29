@@ -1,7 +1,10 @@
 from setuptools import setup
 
+import replayer
+
+
 setup(name='replayer',
-      version='0.2.2',
+      version=replayer.__version__,
       description='Replay easily an Apache access.log',
       url='https://github.com/buechele/replayer',
       author='Andreas Buechele',

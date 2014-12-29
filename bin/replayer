@@ -11,6 +11,7 @@ import os.path
 
 import apachelog
 
+import replayer
 from replayer.config_reader import ConfigReader
 from replayer.http_worker import HTTPWorker
 from replayer.url_filter import URLFilter
@@ -56,6 +57,8 @@ def main():
         logging.basicConfig(level=logging.DEBUG, format='%(message)s')
     else:
         logging.basicConfig(level=logging.INFO, format='%(message)s')
+
+    logging.info('This is replayer, Version ' + replayer.__version__)
 
     # check if access log exists
     if not os.path.isfile(config[ConfigConstants.LOGFILE]):
