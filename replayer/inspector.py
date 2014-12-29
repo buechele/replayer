@@ -2,6 +2,7 @@ import logging
 import os
 
 from log_constants import LogConstants
+from hurry.filesize import size
 
 
 class Inspector(object):
@@ -10,31 +11,34 @@ class Inspector(object):
         self.__failed = 0
         self.__status_match = 0
         self.__length_match = 0
+        self.__size = 0
 
     def __add__(self, other):
         self.__count += other.__count
         self.__failed += other.__failed
         self.__status_match += other.__status_match
         self.__length_match += other.__length_match
+        self.__size += other.__size
         return self
 
     def __str__(self):
-        result = '[Overview]' + os.linesep
-        result += 'Requests: ' + str(self.__count) + os.linesep
-        result += '[Responses]' + os.linesep
-        
+        result = 'Requests:\t\t' + str(self.__count) + os.linesep
+        result += os.linesep
+
         failed_perc = 0
         if self.__count > 0:
             failed_perc = (self.__failed * 100) / self.__count
-        result += 'Failed requests: ' + str(failed_perc) + '% (' + str(self.__failed) + ' from ' + str(self.__count) + ')' + os.linesep
-        
+        result += 'Failed requests:\t' + str(failed_perc) + '% (' + str(self.__failed) + ' from ' + str(
+            self.__count) + ')' + os.linesep
+
         status_perc = 0
         if self.__count > 0:
             status_perc = (self.__status_match * 100) / self.__count
-        result += 'Status codes matched: ' + str(status_perc) + '% (' + str(
+        result += 'Status code matched:\t' + str(status_perc) + '% (' + str(
             self.__status_match) + ' from ' + str(self.__count) + ')' + os.linesep
-        
-        result += 'Size matched: ' + str(self.__length_match) + ' from ' + str(self.__count)
+
+        result += 'Content transferred:\t' + size(self.__size) + ' (' + str(self.__size) + ' bytes)' + os.linesep
+        result += 'Size matched:\t\t' + str(self.__length_match) + ' from ' + str(self.__count)
 
         return result
 
@@ -57,5 +61,6 @@ class Inspector(object):
         self.inspect_status(url, log_data, status)
 
         length = len(response.read())
+        self.__size += length
         if str(length) == log_data[LogConstants.BYTES]:
             self.__length_match += 1

@@ -34,6 +34,21 @@ def signal_handler(signal, frame):
         t.kill()
 
 
+def print_infos(logfile):
+    logging.info('This is replayer, Version ' + replayer.__version__)
+    logging.info('Copyright 2014 Andreas Buechele, https://github.com/buechele/replayer')
+    logging.info('replayer is released under the terms of the MIT license.')
+    logging.info('')
+    logging.info('Replaying ' + logfile + ' (be patient)...')
+    logging.info('')
+
+def print_results(config, inspector):
+    logging.info('')
+    logging.info('Host:\t\t\t' + config[ConfigConstants.HOST])
+    logging.info('')
+    logging.info(inspector)
+
+
 def main():
     # register signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -59,12 +74,6 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO, format='%(message)s')
 
-    # general information
-    logging.info('This is replayer, Version ' + replayer.__version__)
-    logging.info('Copyright 2014 Andreas Buechele, https://github.com/buechele/replayer')
-    logging.info('replayer is released under the terms of the MIT license.')
-    logging.info('')
-
     # check if access log exists
     if not os.path.isfile(config[ConfigConstants.LOGFILE]):
         logging.error('log file ' + config[ConfigConstants.LOGFILE] + ' does not exist!')
@@ -84,14 +93,14 @@ def main():
     else:
         url_filter = URLFilter({})
 
+    # general information
+    print_infos(config[ConfigConstants.LOGFILE])
+
     # init and start threads
     for i in range(config[ConfigConstants.THREADCOUNT]):
         t = HTTPWorker(i + 1, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
         thread_list.append(t)
         t.start()
-
-    logging.info('Replaying ' + config[ConfigConstants.LOGFILE] + ' (be patient)...')
-    logging.info('')
 
     # read access log
     for line in open(config[ConfigConstants.LOGFILE]):
@@ -112,7 +121,7 @@ def main():
         inspector += t.get_inspector()
 
     # print results
-    print inspector
+    print_results(config, inspector)
 
 
 if __name__ == '__main__':

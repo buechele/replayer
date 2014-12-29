@@ -19,22 +19,25 @@ class HTTPWorker(threading.Thread):
         self.__killed = False
         self.__inspector = Inspector()
 
+    def __request(self, data):
+        url = self.__url_builder.build(data)
+        try:
+            response = self.__opener.open(url)
+        except urllib2.HTTPError as e:
+            self.__inspector.inspect_status(url, data, str(e.code))
+        except urllib2.URLError as e:
+            self.__inspector.inspect_fail(url, e.reason)
+        else:
+            self.__inspector.inspect(url, data, response)
+            response.close()
+
     def run(self):
         logging.debug('Start thread ' + str(self.__thread_id))
         while (not self.__killed) and (self.__do_work or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 1)
                 if self.__url_filter.proceed(data):
-                    url = self.__url_builder.build(data)
-                    try:
-                        response = self.__opener.open(url)
-                    except urllib2.HTTPError as e:
-                        self.__inspector.inspect_status(url, data, str(e.code))
-                    except urllib2.URLError as e:
-                        self.__inspector.inspect_fail(url, e.reason)
-                    else:
-                        self.__inspector.inspect(url, data, response)
-                        response.close()
+                    self.__request(data)
             except Queue.Empty:
                 logging.debug('Queue is empty for thread ' + str(self.__thread_id))
         logging.debug('Stop thread ' + str(self.__thread_id))
