@@ -1,8 +1,9 @@
 import logging
 import os
 
-from log_constants import LogConstants
 from hurry.filesize import size
+
+from log_constants import LogConstants
 
 
 class Inspector(object):
@@ -48,20 +49,15 @@ class Inspector(object):
 
         logging.error('Request ' + url + ' failed with reason ' + str(reason))
 
-    def inspect_status(self, url, log_data, code):
+    def inspect_succeed(self, url, log_data, response):
         self.__count += 1
 
+        code = str(response.status_code)
         if code == log_data[LogConstants.STATUSCODE]:
             self.__status_match += 1
 
-        logging.debug('URL: ' + url + ' Status: ' + code)
-
-    def inspect(self, url, log_data, response):
-        status = str(response.getcode())
-        self.inspect_status(url, log_data, status)
-
-        response = response.read()
-        length = len(response)
+        content = response.text
+        length = len(content)
         self.__size += length
         if str(length) == log_data[LogConstants.BYTES]:
             self.__length_match += 1

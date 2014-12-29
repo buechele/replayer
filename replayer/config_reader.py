@@ -21,20 +21,19 @@ class ConfigReader(object):
         cfgparser.read(config_file)
         self.__copy_value(cfgparser, 'General', 'LogFormat', ConfigConstants.LOGFORMAT, True)
         self.__copy_value(cfgparser, 'General', 'Host', ConfigConstants.HOST)
-        self.__copy_filter(cfgparser, ConfigConstants.FILTER)
-        self.__copy_tuple(cfgparser, 'Header', ConfigConstants.HEADER)
+        self.__read_filter(cfgparser, ConfigConstants.FILTER)
+        self.__config[ConfigConstants.HEADER] = self.__read_dict(cfgparser, 'Header')
         for section in cfgparser.sections():
             if section.startswith('Transform'):
                 self.__copy_regex_tuple(cfgparser, section, 'Search', 'Replace', ConfigConstants.TRANSFORM)
 
-    def __copy_tuple(self, config, section, target):
+    @staticmethod
+    def __read_dict(config, section):
+        header_dict = {}
         if config.has_section(section):
             for option in config.options(section):
-                free_tuple = (option, config.get(section, option))
-                if target in self.__config:
-                    self.__config[target].append(free_tuple)
-                else:
-                    self.__config[target] = [free_tuple]
+                header_dict[option] = config.get(section, option)
+        return header_dict
 
     def __copy_regex_tuple(self, config, section, arg1, arg2, target):
         if config.has_section(section):
@@ -46,7 +45,7 @@ class ConfigReader(object):
             else:
                 self.__config[target] = [named_tuple]
 
-    def __copy_filter(self, config, section):
+    def __read_filter(self, config, section):
         if config.has_section(section):
             cfg = {}
             for option in config.options(section):

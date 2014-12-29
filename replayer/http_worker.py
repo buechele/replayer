@@ -1,7 +1,8 @@
 import Queue
-import urllib2
 import logging
 import threading
+
+import requests
 
 from inspector import Inspector
 
@@ -21,17 +22,11 @@ class HTTPWorker(threading.Thread):
     def __request(self, data):
         url = self.__url_builder.build(data)
         try:
-            request = urllib2.Request(url)
-            for (key, val) in self.__headers:
-                request.add_header(key, val)
-            response = urllib2.urlopen(request)
-        except urllib2.HTTPError as e:
-            self.__inspector.inspect_status(url, data, str(e.code))
-        except urllib2.URLError as e:
-            self.__inspector.inspect_fail(url, e.reason)
+            response = requests.get(url, headers=self.__headers)
+        except requests.RequestException as e:
+            self.__inspector.inspect_fail(url, str(e.message))
         else:
-            self.__inspector.inspect(url, data, response)
-            response.close()
+            self.__inspector.inspect_succeed(url, data, response)
 
     def run(self):
         logging.debug('Start thread ' + str(self.__thread_id))
