@@ -6,6 +6,10 @@ Replay easily an Apache access.log.
 
 `pip install replayer`
 
+or
+
+`easy_install replayer`
+
 ## Usage
 
 Here is an example configuration file:
@@ -38,7 +42,7 @@ replace =
 
 #### Section `Filter`
 
-Requests will only take place, if the configured criteria is satisfied for the original request in the Apache access.log.
+Requests will only take place, if all configured criteria are satisfied for the original request in the Apache access.log.
 
 | Entry     | Description |
 |-----------|-------------|
@@ -59,7 +63,7 @@ valid `Transform` section).
 | Entry   | Description |
 |---------|-------------|
 | Search  | String to search in request URL. Regular expressions are allowed. |
-| Replace | Replacement for Strings which are found. |
+| Replace | Replacement for Strings which were found. |
 
 ## See also
 
