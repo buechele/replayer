@@ -46,7 +46,7 @@ class Inspector(object):
         self.__count += 1
         self.__failed += 1
 
-        logging.error('Request ' + url + ' failed with reason ' + reason)
+        logging.error('Request ' + url + ' failed with reason ' + str(reason))
 
     def inspect_status(self, url, log_data, code):
         self.__count += 1

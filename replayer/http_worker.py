@@ -42,6 +42,8 @@ class HTTPWorker(threading.Thread):
                     self.__request(data)
             except Queue.Empty:
                 logging.debug('Queue is empty for thread ' + str(self.__thread_id))
+            except IOError as e:
+                logging.error(e.message)
         logging.debug('Stop thread ' + str(self.__thread_id))
 
     def get_inspector(self):
