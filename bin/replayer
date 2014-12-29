@@ -21,6 +21,7 @@ from replayer.inspector import Inspector
 
 
 
+
 # global variables
 thread_list = []
 killed = False
@@ -58,7 +59,11 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO, format='%(message)s')
 
+    # general information
     logging.info('This is replayer, Version ' + replayer.__version__)
+    logging.info('Copyright 2014 Andreas Buechele, https://github.com/buechele/replayer')
+    logging.info('replayer is released under the terms of the MIT license.')
+    logging.info('')
 
     # check if access log exists
     if not os.path.isfile(config[ConfigConstants.LOGFILE]):
