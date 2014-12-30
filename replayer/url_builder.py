@@ -1,3 +1,5 @@
+import re
+
 from log_constants import LogConstants
 
 
@@ -8,14 +10,24 @@ class URLBuilder(object):
         self.__port = port
         self.__url_prefix = protocol + '://' + host
         self.__regex_list = regex_list
+        self.__fix_host_regex = re.compile('^http://[^/]*')
+
+    def __fix_common_problems(self, url):
+        if url.startswith('http://'):
+            return self.__fix_host_regex.sub('', url)
+        else:
+            return url
 
     def build(self, request_data):
         request_line = request_data[LogConstants.REQUESTLINE].split(' ')
 
         if len(request_line) < 2:
-            raise IOError('Ignoring request with line ' + request_data[LogConstants.REQUESTLINE])
+            raise IOError('Ignoring request line %s', request_data[LogConstants.REQUESTLINE])
 
-        url = self.__url_prefix + request_line[1]
+        # check and fix broken request paths
+        request_path = self.__fix_common_problems(request_line[1])
+
+        url = self.__url_prefix + request_path
         for regex_tuple in self.__regex_list:
             url = regex_tuple[0].sub(regex_tuple[1], url)
         return url
