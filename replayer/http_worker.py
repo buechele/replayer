@@ -3,7 +3,6 @@ import logging
 import threading
 
 import requests
-
 from inspector import Inspector
 
 
@@ -24,22 +23,22 @@ class HTTPWorker(threading.Thread):
         try:
             response = requests.get(url, headers=self.__headers)
         except requests.RequestException as e:
-            self.__inspector.inspect_fail(url, str(e.message))
+            self.__inspector.inspect_fail(self.__thread_id, url, str(e.message))
         else:
-            self.__inspector.inspect_succeed(url, data, response)
+            self.__inspector.inspect_succeed(self.__thread_id, url, data, response)
 
     def run(self):
-        logging.debug('Start thread ' + str(self.__thread_id))
+        logging.debug('[Thread %i] Starting thread', self.__thread_id)
         while (not self.__killed) and (self.__do_work or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 1)
                 if self.__url_filter.proceed(data):
                     self.__request(data)
             except Queue.Empty:
-                logging.debug('Queue is empty for thread ' + str(self.__thread_id))
+                logging.debug('[Thread %i] Queue is empty', self.__thread_id)
             except IOError as e:
                 logging.error(e.message)
-        logging.debug('Stop thread ' + str(self.__thread_id))
+        logging.debug('[Thread %i] Stopping thread ', self.__thread_id)
 
     def get_inspector(self):
         return self.__inspector

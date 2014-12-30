@@ -43,13 +43,13 @@ class Inspector(object):
 
         return result
 
-    def inspect_fail(self, url, reason):
+    def inspect_fail(self, thread_id, url, reason):
         self.__count += 1
         self.__failed += 1
 
-        logging.error('Request ' + url + ' failed with reason ' + str(reason))
+        logging.error('[Thread %i] Request %s failed with reason %s', thread_id, url, str(reason))
 
-    def inspect_succeed(self, url, log_data, response):
+    def inspect_succeed(self, thread_id, url, log_data, response):
         self.__count += 1
 
         code = str(response.status_code)
@@ -61,3 +61,5 @@ class Inspector(object):
         self.__size += length
         if str(length) == log_data[LogConstants.BYTES]:
             self.__length_match += 1
+
+        logging.debug('[Thread %i] URL: %s Status: %s Length: %i', thread_id, url, code, length)
