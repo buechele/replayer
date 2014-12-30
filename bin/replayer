@@ -31,6 +31,7 @@ killed = False
 
 # signal handler to handle ctrl-c
 def signal_handler(signal, frame):
+    logging.info('SIGINT received. Stopping...')
     global killed
     killed = True
     for t in thread_list:
@@ -116,7 +117,7 @@ def main():
             if killed:
                 break
         except:
-            logging.error('Unable to parse %s' % line)
+            logging.error('Unable to parse %s', line)
 
     inspector = Inspector()
 
