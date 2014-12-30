@@ -8,6 +8,7 @@ import logging
 import signal
 import sys
 import os.path
+from datetime import datetime
 
 import apachelog
 
@@ -18,6 +19,7 @@ from replayer.url_filter import URLFilter
 from replayer.url_builder import URLBuilder
 from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
+
 
 
 
@@ -36,12 +38,13 @@ def signal_handler(signal, frame):
 
 
 def print_infos(logfile):
-    logging.info('This is replayer, Version ' + replayer.__version__)
+    logging.info('This is replayer, Version %s', replayer.__version__)
     logging.info('Copyright 2014 Andreas Buechele, https://github.com/buechele/replayer')
     logging.info('replayer is released under the terms of the MIT license.')
     logging.info('')
-    logging.info('Replaying ' + logfile + ' (be patient)...')
-    logging.info('')
+
+    now = datetime.now()
+    logging.info('[%s] Replaying %s (be patient)...', now.strftime('%d/%m/%Y %H:%M:%S'), logfile)
 
 
 def print_results(config, inspector):
@@ -122,6 +125,10 @@ def main():
         t.stop()
         t.join()
         inspector += t.get_inspector()
+
+    now = datetime.now()
+    logging.info('[%s] Done', now.strftime('%d/%m/%Y %H:%M:%S'))
+    logging.info('')
 
     # print results
     print_results(config, inspector)
