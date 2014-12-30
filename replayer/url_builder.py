@@ -12,11 +12,11 @@ class URLBuilder(object):
         self.__regex_list = regex_list
         self.__fix_host_regex = re.compile('^http://[^/]*')
 
-    def __fix_common_problems(self, url):
-        if url.startswith('http://'):
-            return self.__fix_host_regex.sub('', url)
+    def __fix_common_problems(self, request_line):
+        if request_line.startswith('http://'):
+            return self.__fix_host_regex.sub('', request_line)
         else:
-            return url
+            return request_line
 
     def build(self, request_data):
         request_line = request_data[LogConstants.REQUESTLINE].split(' ')
