@@ -21,10 +21,6 @@ from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
 
 
-
-
-
-
 # global variables
 thread_list = []
 killed = False
@@ -94,7 +90,7 @@ def main():
     # initialize worker objects
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
     url_queue = Queue.Queue(config[ConfigConstants.THREADCOUNT] * 10)
-    url_builder = URLBuilder("http", config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
+    url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
     if config.has_key(ConfigConstants.FILTER):
         url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
     else:
@@ -105,7 +101,8 @@ def main():
 
     # init and start threads
     for i in range(config[ConfigConstants.THREADCOUNT]):
-        t = HTTPWorker(i + 1, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
+        t = HTTPWorker(config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
+        t.setName('Thread ' + str(i + 1))
         thread_list.append(t)
         t.start()
 

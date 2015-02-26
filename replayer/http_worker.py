@@ -7,9 +7,8 @@ from inspector import Inspector
 
 
 class HTTPWorker(threading.Thread):
-    def __init__(self, thread_id, headers, request_queue, url_filter, url_builder):
+    def __init__(self, headers, request_queue, url_filter, url_builder):
         threading.Thread.__init__(self)
-        self.__thread_id = thread_id
         self.__headers = headers
         self.__request_queue = request_queue
         self.__url_filter = url_filter
@@ -23,22 +22,22 @@ class HTTPWorker(threading.Thread):
         try:
             response = requests.get(url, headers=self.__headers)
         except requests.RequestException as e:
-            self.__inspector.inspect_fail(self.__thread_id, url, str(e.message))
+            self.__inspector.inspect_fail(self.name, url, str(e.message))
         else:
-            self.__inspector.inspect_succeed(self.__thread_id, url, data, response)
+            self.__inspector.inspect_succeed(self.name, url, data, response)
 
     def run(self):
-        logging.debug('[Thread %i] Starting thread', self.__thread_id)
+        logging.debug('[%s] Starting thread', self.name)
         while (not self.__killed) and (self.__do_work or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 1)
                 if self.__url_filter.proceed(data):
                     self.__request(data)
             except Queue.Empty:
-                logging.debug('[Thread %i] Queue is empty', self.__thread_id)
+                logging.debug('[%s] Queue is empty', self.name)
             except IOError as e:
                 logging.error(e.message)
-        logging.debug('[Thread %i] Stopping thread ', self.__thread_id)
+        logging.debug('[%s] Stopping thread ', self.name)
 
     def get_inspector(self):
         return self.__inspector
