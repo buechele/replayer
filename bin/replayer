@@ -3,12 +3,12 @@
 """
 
 import argparse
-import Queue
 import logging
 import signal
 import sys
 import os.path
 from datetime import datetime
+from multiprocessing import Queue
 
 import apachelog
 
@@ -89,7 +89,7 @@ def main():
 
     # initialize worker objects
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
-    url_queue = Queue.Queue(config[ConfigConstants.THREADCOUNT] * 10)
+    url_queue = Queue(config[ConfigConstants.THREADCOUNT] * 10)
     url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
     if config.has_key(ConfigConstants.FILTER):
         url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])

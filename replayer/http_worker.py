@@ -1,6 +1,6 @@
-import Queue
 import logging
 import threading
+from Queue import Empty
 
 import requests
 
@@ -34,7 +34,7 @@ class HTTPWorker(threading.Thread):
                 data = self.__request_queue.get(True, 1)
                 if self.__url_filter.proceed(data):
                     self.__request(data)
-            except Queue.Empty:
+            except Empty:
                 logging.debug('[%s] Queue is empty', self.name)
             except IOError as e:
                 logging.error(e.message)
