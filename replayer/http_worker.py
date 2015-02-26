@@ -3,12 +3,13 @@ import logging
 import threading
 
 import requests
+
 from inspector import Inspector
 
 
 class HTTPWorker(threading.Thread):
-    def __init__(self, headers, request_queue, url_filter, url_builder):
-        threading.Thread.__init__(self)
+    def __init__(self, name, headers, request_queue, url_filter, url_builder):
+        threading.Thread.__init__(self, name=name)
         self.__headers = headers
         self.__request_queue = request_queue
         self.__url_filter = url_filter
@@ -27,7 +28,7 @@ class HTTPWorker(threading.Thread):
             self.__inspector.inspect_succeed(self.name, url, data, response)
 
     def run(self):
-        logging.debug('[%s] Starting thread', self.name)
+        logging.debug('[%s] Starting worker', self.name)
         while (not self.__killed) and (self.__do_work or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 1)

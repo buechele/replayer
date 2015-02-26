@@ -101,10 +101,10 @@ def main():
 
     # init and start threads
     for i in range(config[ConfigConstants.THREADCOUNT]):
-        t = HTTPWorker(config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
-        t.setName('Thread ' + str(i + 1))
-        thread_list.append(t)
-        t.start()
+        name = 'Worker ' + str(i + 1)
+        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
+        thread_list.append(worker)
+        worker.start()
 
     # read access log
     for line in open(config[ConfigConstants.LOGFILE]):
@@ -119,10 +119,10 @@ def main():
     inspector = Inspector()
 
     # close threads
-    for t in thread_list:
-        t.stop()
-        t.join()
-        inspector += t.get_inspector()
+    for worker in thread_list:
+        worker.stop()
+        worker.join()
+        inspector += worker.get_inspector()
 
     now = datetime.now()
     logging.info('[%s] Done', now.strftime('%d/%m/%Y %H:%M:%S'))
