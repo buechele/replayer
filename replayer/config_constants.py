@@ -7,7 +7,7 @@ class ConfigConstants(object):
     HEADER = 'header'
     TRANSFORM = 'transform'
     LOGFORMAT = 'log_format'
-    THREADCOUNT = 'thread_count'
+    WORKERCOUNT = 'worker_count'
     LOGFILE = 'log_file'
     VERBOSE = 'verbose'
     CONFIGFILE = 'config_file'

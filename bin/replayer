@@ -22,7 +22,7 @@ from replayer.inspector import Inspector
 
 
 # global variables
-thread_list = []
+worker_list = []
 killed = False
 
 # signal handler to handle ctrl-c
@@ -30,7 +30,7 @@ def signal_handler(signal, frame):
     logging.info('SIGINT received. Stopping...')
     global killed
     killed = True
-    for t in thread_list:
+    for t in worker_list:
         t.kill()
 
 
@@ -59,7 +59,7 @@ def main():
     parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
     parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
     parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
-    parser.add_argument('-n', dest=ConfigConstants.THREADCOUNT, type=int, help='Concurrency level', default=1,
+    parser.add_argument('-n', dest=ConfigConstants.WORKERCOUNT, type=int, help='Concurrency level', default=1,
                         required=False)
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
@@ -89,7 +89,7 @@ def main():
 
     # initialize worker objects
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
-    url_queue = Queue(config[ConfigConstants.THREADCOUNT] * 10)
+    url_queue = Queue(config[ConfigConstants.WORKERCOUNT] * 10)
     url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
     if config.has_key(ConfigConstants.FILTER):
         url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
@@ -100,10 +100,10 @@ def main():
     print_infos(config[ConfigConstants.LOGFILE])
 
     # init and start threads
-    for i in range(config[ConfigConstants.THREADCOUNT]):
+    for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
-        thread_list.append(worker)
+        worker_list.append(worker)
         worker.start()
 
     # read access log
@@ -118,9 +118,12 @@ def main():
 
     inspector = Inspector()
 
-    # close threads
-    for worker in thread_list:
-        worker.stop()
+    # signal exit to all workers
+    for worker in worker_list:
+        worker.exit()
+
+    # join all workers
+    for worker in worker_list:
         worker.join()
         inspector += worker.get_inspector()
 

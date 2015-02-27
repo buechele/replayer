@@ -1,5 +1,6 @@
 import logging
-import threading
+from time import sleep
+from multiprocessing import Process, Event
 from Queue import Empty
 
 import requests
@@ -7,15 +8,16 @@ import requests
 from inspector import Inspector
 
 
-class HTTPWorker(threading.Thread):
-    def __init__(self, name, headers, request_queue, url_filter, url_builder):
-        threading.Thread.__init__(self, name=name)
+class HTTPWorker(Process):
+    def __init__(self, name, headers, request_queue, url_filter, url_builder, pause_time=0):
+        Process.__init__(self, name=name)
         self.__headers = headers
         self.__request_queue = request_queue
         self.__url_filter = url_filter
         self.__url_builder = url_builder
-        self.__do_work = True
-        self.__killed = False
+        self.__pause_time = pause_time
+        self.__exit = Event()
+        self.__killed = Event()
         self.__inspector = Inspector()
 
     def __request(self, data):
@@ -29,7 +31,7 @@ class HTTPWorker(threading.Thread):
 
     def run(self):
         logging.debug('[%s] Starting worker', self.name)
-        while (not self.__killed) and (self.__do_work or (not self.__request_queue.empty())):
+        while (not self.__killed.is_set()) and (not self.__exit.is_set() or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 1)
                 if self.__url_filter.proceed(data):
@@ -38,13 +40,16 @@ class HTTPWorker(threading.Thread):
                 logging.debug('[%s] Queue is empty', self.name)
             except IOError as e:
                 logging.error(e.message)
-        logging.debug('[%s] Stopping thread ', self.name)
+            else:
+                sleep(self.__pause_time / 1000.0)
+
+        logging.debug('[%s] Stopping worker ', self.name)
 
     def get_inspector(self):
         return self.__inspector
 
-    def stop(self):
-        self.__do_work = False
+    def exit(self):
+        self.__exit.set()
 
     def kill(self):
-        self.__killed = True
+        self.__killed.set()
