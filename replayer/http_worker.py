@@ -18,16 +18,16 @@ class HTTPWorker(Process):
         self.__pause_time = pause_time
         self.__exit = Event()
         self.__killed = Event()
-        self.__inspector = Inspector()
+        self.inspector = Inspector()
 
     def __request(self, data):
         url = self.__url_builder.build(data)
         try:
             response = requests.get(url, headers=self.__headers)
         except requests.RequestException as e:
-            self.__inspector.inspect_fail(self.name, url, str(e.message))
+            self.inspector.inspect_fail(self.name, url, str(e.message))
         else:
-            self.__inspector.inspect_succeed(self.name, url, data, response)
+            self.inspector.inspect_succeed(self.name, url, data, response)
 
     def run(self):
         logging.debug('[%s] Starting worker', self.name)
@@ -44,9 +44,6 @@ class HTTPWorker(Process):
                 sleep(self.__pause_time / 1000.0)
 
         logging.debug('[%s] Stopping worker ', self.name)
-
-    def get_inspector(self):
-        return self.__inspector
 
     def exit(self):
         self.__exit.set()

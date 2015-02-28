@@ -125,7 +125,7 @@ def main():
     # join all workers
     for worker in worker_list:
         worker.join()
-        inspector += worker.get_inspector()
+        inspector += worker.inspector
 
     now = datetime.now()
     logging.info('[%s] Done', now.strftime('%d/%m/%Y %H:%M:%S'))
