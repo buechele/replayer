@@ -99,10 +99,13 @@ def main():
     # general information
     print_infos(config[ConfigConstants.LOGFILE])
 
-    # init and start threads
+    # initialize result queue
+    result_queue = Queue()
+
+    # initialize and start threads
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
-        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder)
+        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue)
         worker_list.append(worker)
         worker.start()
 
@@ -116,8 +119,6 @@ def main():
         except:
             logging.error('Unable to parse %s', line)
 
-    inspector = Inspector()
-
     # signal exit to all workers
     for worker in worker_list:
         worker.exit()
@@ -125,14 +126,19 @@ def main():
     # join all workers
     for worker in worker_list:
         worker.join()
-        inspector += worker.inspector
+
+    # sum up the results
+    result = Inspector()
+    while not result_queue.empty():
+        result += result_queue.get_nowait()
+        
 
     now = datetime.now()
     logging.info('[%s] Done', now.strftime('%d/%m/%Y %H:%M:%S'))
     logging.info('')
 
     # print results
-    print_results(config, inspector)
+    print_results(config, result)
 
 
 if __name__ == '__main__':

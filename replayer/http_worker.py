@@ -9,7 +9,7 @@ from inspector import Inspector
 
 
 class HTTPWorker(Process):
-    def __init__(self, name, headers, request_queue, url_filter, url_builder, pause_time=0):
+    def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, pause_time=0):
         Process.__init__(self, name=name)
         self.__headers = headers
         self.__request_queue = request_queue
@@ -18,6 +18,7 @@ class HTTPWorker(Process):
         self.__pause_time = pause_time
         self.__exit = Event()
         self.__killed = Event()
+        self.__result_queue = result_queue
         self.inspector = Inspector()
 
     def __request(self, data):
@@ -43,6 +44,7 @@ class HTTPWorker(Process):
             else:
                 sleep(self.__pause_time / 1000.0)
 
+        self.__result_queue.put(self.inspector)
         logging.debug('[%s] Stopping worker ', self.name)
 
     def exit(self):
