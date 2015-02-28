@@ -61,6 +61,9 @@ def main():
     parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
     parser.add_argument('-n', dest=ConfigConstants.WORKERCOUNT, type=int, help='Concurrency level', default=1,
                         required=False)
+    parser.add_argument('-p', dest=ConfigConstants.PAUSETIME, type=int,
+                        help='Pause time in milliseconds between requests', default=0,
+                        required=False)
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
     args = vars(parser.parse_args())
@@ -68,7 +71,7 @@ def main():
     # read config file
     config_reader = ConfigReader(args[ConfigConstants.CONFIGFILE])
     config_reader.merge_dict(args)
-    config = config_reader.get_config()
+    config = config_reader.config
 
     # configure logging
     logging.getLogger('requests').setLevel(logging.WARNING)
@@ -105,7 +108,8 @@ def main():
     # initialize and start threads
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
-        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue)
+        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
+                            config[ConfigConstants.PAUSETIME])
         worker_list.append(worker)
         worker.start()
 
@@ -120,18 +124,15 @@ def main():
             logging.error('Unable to parse %s', line)
 
     # signal exit to all workers
-    for worker in worker_list:
-        worker.exit()
+    map(lambda w: w.exit(), worker_list)
 
     # join all workers
-    for worker in worker_list:
-        worker.join()
+    map(lambda w: w.join(), worker_list)
 
     # sum up the results
     result = Inspector()
     while not result_queue.empty():
         result += result_queue.get_nowait()
-        
 
     now = datetime.now()
     logging.info('[%s] Done', now.strftime('%d/%m/%Y %H:%M:%S'))

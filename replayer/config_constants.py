@@ -11,3 +11,4 @@ class ConfigConstants(object):
     LOGFILE = 'log_file'
     VERBOSE = 'verbose'
     CONFIGFILE = 'config_file'
+    PAUSETIME = 'pause_time'
