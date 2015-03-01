@@ -25,6 +25,7 @@ from replayer.inspector import Inspector
 worker_list = []
 killed = False
 
+
 # signal handler to handle ctrl-c
 def signal_handler(signal, frame):
     logging.info('SIGINT received. Stopping...')
