@@ -33,7 +33,7 @@ def signal_handler(signal, frame):
     global killed
     killed = True
     map(lambda w: w.kill(), worker_list)
-    
+
 
 def print_infos(logfile):
     logging.info('This is replayer, Version %s', replayer.__version__)
@@ -62,8 +62,8 @@ def main():
     parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
     parser.add_argument('-n', dest=ConfigConstants.WORKERCOUNT, type=int, help='Concurrency level', default=1,
                         required=False)
-    parser.add_argument('-p', dest=ConfigConstants.PAUSETIME, type=int,
-                        help='Pause time in milliseconds between requests', default=0,
+    parser.add_argument('--delay', dest=ConfigConstants.DELAY, type=int,
+                        help='Delay between requests in milliseconds', default=0,
                         required=False)
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
@@ -110,7 +110,7 @@ def main():
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
-                            config[ConfigConstants.PAUSETIME])
+                            config[ConfigConstants.DELAY])
         worker_list.append(worker)
         worker.start()
 
