@@ -8,7 +8,7 @@ import signal
 import sys
 import os.path
 from datetime import datetime
-from multiprocessing import Queue
+import multiprocessing
 from Queue import Full
 
 import apachelog
@@ -29,7 +29,7 @@ killed = False
 
 # signal handler to handle ctrl-c
 def signal_handler(signal, frame):
-    logging.info('SIGINT received. Stopping...')
+    logging.info('[%s] SIGINT received. Stopping...', multiprocessing.current_process().name)
     global killed
     killed = True
     map(lambda w: w.kill(), worker_list)
@@ -93,7 +93,7 @@ def main():
 
     # initialize worker objects
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
-    url_queue = Queue(config[ConfigConstants.WORKERCOUNT] * 10)
+    url_queue = multiprocessing.Queue(config[ConfigConstants.WORKERCOUNT] * 10)
     url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
     if config.has_key(ConfigConstants.FILTER):
         url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
@@ -104,7 +104,7 @@ def main():
     print_infos(config[ConfigConstants.LOGFILE])
 
     # initialize result queue
-    result_queue = Queue()
+    result_queue = multiprocessing.Queue()
 
     # initialize and start threads
     for i in range(config[ConfigConstants.WORKERCOUNT]):
