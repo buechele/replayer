@@ -9,6 +9,7 @@ import sys
 import os.path
 from datetime import datetime
 from multiprocessing import Queue
+from Queue import Full
 
 import apachelog
 
@@ -31,9 +32,8 @@ def signal_handler(signal, frame):
     logging.info('SIGINT received. Stopping...')
     global killed
     killed = True
-    for t in worker_list:
-        t.kill()
-
+    map(lambda w: w.kill(), worker_list)
+    
 
 def print_infos(logfile):
     logging.info('This is replayer, Version %s', replayer.__version__)
@@ -116,11 +116,13 @@ def main():
 
     # read access log
     for line in open(config[ConfigConstants.LOGFILE]):
+        if killed:
+            break
         try:
             data = parser.parse(line)
-            url_queue.put(data, True)
-            if killed:
-                break
+            url_queue.put(data, True, 2)
+        except Full:
+            logging.error('Queue is full')
         except:
             logging.error('Unable to parse %s', line)
 
