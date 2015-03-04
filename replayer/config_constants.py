@@ -12,3 +12,4 @@ class ConfigConstants(object):
     VERBOSE = 'verbose'
     CONFIGFILE = 'config_file'
     DELAY = 'delay'
+    TIMED = 'timed'

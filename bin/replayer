@@ -8,6 +8,7 @@ import signal
 import sys
 import os.path
 from datetime import datetime
+import time
 import multiprocessing
 from Queue import Full
 
@@ -52,6 +53,12 @@ def print_results(config, inspector):
     logging.info(inspector)
 
 
+def parse_datetime(data):
+    log_time, zone = data.split()
+    log_time = log_time.translate(None, "[]")
+    return datetime.strptime(log_time, '%d/%b/%Y:%H:%M:%S')
+
+
 def main():
     # register signal handler
     signal.signal(signal.SIGINT, signal_handler)
@@ -67,6 +74,8 @@ def main():
                         required=False)
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
+    parser.add_argument('--timed', dest=ConfigConstants.TIMED, action='store_true')
+    parser.set_defaults(timed=False)
     args = vars(parser.parse_args())
 
     # read config file
@@ -114,17 +123,31 @@ def main():
         worker_list.append(worker)
         worker.start()
 
+    first_line = True
+
     # read access log
     for line in open(config[ConfigConstants.LOGFILE]):
         if killed:
             break
         try:
             data = parser.parse(line)
+
+            if config[ConfigConstants.TIMED]:
+                if first_line:
+                    first_line = False
+                    last_date = int(parse_datetime(data['%t']).strftime('%s'))
+                else:
+                    current_date = int(parse_datetime(data['%t']).strftime('%s'))
+                    wait_time = current_date - last_date
+                    last_date = current_date
+                    if wait_time > 0:
+                        time.sleep(wait_time)
+
             url_queue.put(data, True, 2)
         except Full:
             logging.error('Queue is full')
         except:
-            logging.error('Unable to parse %s', line)
+            logging.error('Unable to parse %s: %s', line, sys.exc_info())
 
     # signal exit to all workers
     map(lambda w: w.exit(), worker_list)

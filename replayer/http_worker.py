@@ -34,7 +34,7 @@ class HTTPWorker(Process):
         logging.debug('[%s] Starting worker', self.name)
         while (not self.__killed.is_set()) and (not self.__exit.is_set() or (not self.__request_queue.empty())):
             try:
-                data = self.__request_queue.get(True, 1)
+                data = self.__request_queue.get(True, 0.5)
                 if self.__url_filter.proceed(data):
                     self.__request(data)
             except Empty:
