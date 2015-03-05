@@ -139,8 +139,8 @@ def main():
                 else:
                     current_date = int(parse_datetime(data['%t']).strftime('%s'))
                     wait_time = current_date - last_date
-                    last_date = current_date
                     if wait_time > 0:
+                        last_date = current_date
                         time.sleep(wait_time)
 
             url_queue.put(data, True, 2)
