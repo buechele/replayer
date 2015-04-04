@@ -7,7 +7,6 @@ import requests
 
 from inspector import Inspector
 
-
 class HTTPWorker(Process):
     def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, pause_time=0):
         Process.__init__(self, name=name)
@@ -19,12 +18,14 @@ class HTTPWorker(Process):
         self.__exit = Event()
         self.__killed = Event()
         self.__result_queue = result_queue
+        self.__cookies = None
         self.inspector = Inspector()
 
     def __request(self, data):
         url = self.__url_builder.build(data)
         try:
-            response = requests.get(url, headers=self.__headers)
+            response = requests.get(url, headers=self.__headers, cookies=self.__cookies)
+            self.__cookies = response.cookies
         except requests.RequestException as e:
             self.inspector.inspect_fail(self.name, url, str(e.message))
         else:
