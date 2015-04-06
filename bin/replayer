@@ -75,6 +75,7 @@ def main():
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
     parser.add_argument('--timed', dest=ConfigConstants.TIMED, action='store_true')
+    parser.add_argument('--no-cookies', dest=ConfigConstants.ALLOW_COOKIES, action='store_false')
     parser.set_defaults(timed=False)
     args = vars(parser.parse_args())
 
@@ -119,7 +120,8 @@ def main():
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
-                            config[ConfigConstants.DELAY])
+                            pause_time=config[ConfigConstants.DELAY],
+                            allow_cookies=config[ConfigConstants.ALLOW_COOKIES])
         worker_list.append(worker)
         worker.start()
 

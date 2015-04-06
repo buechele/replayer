@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 
@@ -13,6 +14,7 @@ class Inspector(object):
         self.__status_match = 0
         self.__length_match = 0
         self.__size = 0
+        self.__elapsed_time = datetime.timedelta()
 
     def __add__(self, other):
         self.__count += other.__count
@@ -20,6 +22,7 @@ class Inspector(object):
         self.__status_match += other.__status_match
         self.__length_match += other.__length_match
         self.__size += other.__size
+        self.__elapsed_time += other.__elapsed_time
         return self
 
     def __str__(self):
@@ -39,7 +42,11 @@ class Inspector(object):
             self.__status_match) + ' from ' + str(self.__count) + ')' + os.linesep
 
         result += 'Content transferred:\t' + size(self.__size) + ' (' + str(self.__size) + ' bytes)' + os.linesep
-        result += 'Size matched:\t\t' + str(self.__length_match) + ' from ' + str(self.__count)
+        result += 'Size matched:\t\t' + str(self.__length_match) + ' from ' + str(self.__count) + os.linesep
+
+        req_count = self.__count - self.__failed
+        avg_time = (self.__elapsed_time.total_seconds() * 1000) / req_count
+        result += 'Average time:\t\t' + str(avg_time) + 'ms'
 
         return result
 
@@ -49,7 +56,7 @@ class Inspector(object):
 
         logging.error('[%s] Request %s failed with reason %s', thread_name, url, str(reason))
 
-    def inspect_succeed(self, thread_name, url, log_data, response):
+    def inspect_succeed(self, thread_name, url, log_data, response, elapsed_time):
         self.__count += 1
 
         code = str(response.status_code)
@@ -61,5 +68,7 @@ class Inspector(object):
         self.__size += length
         if str(length) == log_data[LogConstants.BYTES]:
             self.__length_match += 1
+
+        self.__elapsed_time += elapsed_time
 
         logging.debug('[%s] URL: %s Status: %s Length: %i', thread_name, url, code, length)

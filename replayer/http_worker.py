@@ -1,5 +1,6 @@
 import logging
 from time import sleep
+import datetime
 from multiprocessing import Process, Event
 from Queue import Empty
 
@@ -7,10 +8,11 @@ import requests
 
 from inspector import Inspector
 
+
 class HTTPWorker(Process):
-    def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, pause_time=0):
+    def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, pause_time=0,
+                 allow_cookies=True):
         Process.__init__(self, name=name)
-        self.__headers = headers
         self.__request_queue = request_queue
         self.__url_filter = url_filter
         self.__url_builder = url_builder
@@ -18,18 +20,25 @@ class HTTPWorker(Process):
         self.__exit = Event()
         self.__killed = Event()
         self.__result_queue = result_queue
+        self.__allow_cookies = allow_cookies
         self.__cookies = None
         self.inspector = Inspector()
+        self.__session = requests.Session()
+        self.__session.headers = headers
 
     def __request(self, data):
         url = self.__url_builder.build(data)
         try:
-            response = requests.get(url, headers=self.__headers, cookies=self.__cookies)
-            self.__cookies = response.cookies
+            start_request = datetime.datetime.now()
+            response = self.__session.get(url, cookies=self.__cookies)
+            end_request = datetime.datetime.now()
+            elapsed_time = end_request - start_request
+            if self.__allow_cookies:
+                self.__cookies = response.cookies
         except requests.RequestException as e:
             self.inspector.inspect_fail(self.name, url, str(e.message))
         else:
-            self.inspector.inspect_succeed(self.name, url, data, response)
+            self.inspector.inspect_succeed(self.name, url, data, response, elapsed_time)
 
     def run(self):
         logging.debug('[%s] Starting worker', self.name)

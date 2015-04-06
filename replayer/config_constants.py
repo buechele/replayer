@@ -13,3 +13,4 @@ class ConfigConstants(object):
     CONFIGFILE = 'config_file'
     DELAY = 'delay'
     TIMED = 'timed'
+    ALLOW_COOKIES = 'allow_cookies'
