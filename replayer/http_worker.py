@@ -33,7 +33,6 @@ class HTTPWorker(Process):
             response = self.__session.get(url)
             end_request = datetime.datetime.now()
             elapsed_time = end_request - start_request
-            print response.cookies
         except requests.RequestException as e:
             self.inspector.inspect_fail(self.name, url, str(e.message))
         else:
