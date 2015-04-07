@@ -7,7 +7,7 @@ from Queue import Empty
 import requests
 
 from inspector import Inspector
-
+from block_cookie_policy import BlockCookiePolicy
 
 class HTTPWorker(Process):
     def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, pause_time=0,
@@ -20,21 +20,20 @@ class HTTPWorker(Process):
         self.__exit = Event()
         self.__killed = Event()
         self.__result_queue = result_queue
-        self.__allow_cookies = allow_cookies
-        self.__cookies = None
         self.inspector = Inspector()
         self.__session = requests.Session()
         self.__session.headers = headers
+        if not allow_cookies:
+            self.__session.cookies.set_policy(BlockCookiePolicy())
 
     def __request(self, data):
         url = self.__url_builder.build(data)
         try:
             start_request = datetime.datetime.now()
-            response = self.__session.get(url, cookies=self.__cookies)
+            response = self.__session.get(url)
             end_request = datetime.datetime.now()
             elapsed_time = end_request - start_request
-            if self.__allow_cookies:
-                self.__cookies = response.cookies
+            print response.cookies
         except requests.RequestException as e:
             self.inspector.inspect_fail(self.name, url, str(e.message))
         else:
