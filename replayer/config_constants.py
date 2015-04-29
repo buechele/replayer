@@ -14,3 +14,4 @@ class ConfigConstants(object):
     DELAY = 'delay'
     TIMED = 'timed'
     ALLOW_COOKIES = 'allow_cookies'
+    RAMP_UP = 'ramp_up'

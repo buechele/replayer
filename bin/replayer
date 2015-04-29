@@ -10,6 +10,7 @@ import os.path
 from datetime import datetime
 import time
 import multiprocessing
+from threading import Thread
 from Queue import Full
 
 import apachelog
@@ -28,6 +29,18 @@ worker_list = []
 killed = False
 
 
+def init_simple_logger():
+    logger = logging.getLogger('simple')
+    logger.propagate = False
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    return logger
+
+
 # signal handler to handle ctrl-c
 def signal_handler(signal, frame):
     logging.info('[%s] SIGINT received. Stopping...', multiprocessing.current_process().name)
@@ -36,21 +49,18 @@ def signal_handler(signal, frame):
     map(lambda w: w.kill(), worker_list)
 
 
-def print_infos(logfile):
-    logging.info('This is replayer, Version %s', replayer.__version__)
-    logging.info('Copyright 2014 Andreas Buechele, https://github.com/buechele/replayer')
-    logging.info('replayer is released under the terms of the MIT license.')
-    logging.info('')
-
-    now = datetime.now()
-    logging.info('[%s] Replaying %s (be patient)...', now.strftime('%d/%m/%Y %H:%M:%S'), logfile)
+def print_infos():
+    logging.getLogger('simple').info('This is replayer, Version %s', replayer.__version__)
+    logging.getLogger('simple').info('Copyright 2014 Andreas Buechele, https://github.com/buechele/replayer')
+    logging.getLogger('simple').info('replayer is released under the terms of the MIT license.')
+    logging.getLogger('simple').info('')
 
 
 def print_results(config, inspector):
-    logging.info('')
-    logging.info('Host:\t\t\t' + config[ConfigConstants.HOST])
-    logging.info('')
-    logging.info(inspector)
+    logging.getLogger('simple').info('')
+    logging.getLogger('simple').info('Host:\t\t\t%s', config[ConfigConstants.HOST])
+    logging.getLogger('simple').info('')
+    logging.getLogger('simple').info(inspector)
 
 
 def parse_datetime(data):
@@ -59,71 +69,9 @@ def parse_datetime(data):
     return datetime.strptime(log_time, '%d/%b/%Y:%H:%M:%S')
 
 
-def main():
-    # register signal handler
-    signal.signal(signal.SIGINT, signal_handler)
-
-    # parse command line args
-    parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
-    parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
-    parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
-    parser.add_argument('-n', dest=ConfigConstants.WORKERCOUNT, type=int, help='Concurrency level', default=1,
-                        required=False)
-    parser.add_argument('--delay', dest=ConfigConstants.DELAY, type=int,
-                        help='Delay between requests in milliseconds', default=0,
-                        required=False)
-    parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
-                        required=False)
-    parser.add_argument('--timed', dest=ConfigConstants.TIMED, action='store_true')
-    parser.add_argument('--no-cookies', dest=ConfigConstants.ALLOW_COOKIES, action='store_false')
-    parser.set_defaults(timed=False)
-    args = vars(parser.parse_args())
-
-    # read config file
-    config_reader = ConfigReader(args[ConfigConstants.CONFIGFILE])
-    config_reader.merge_dict(args)
-    config = config_reader.config
-
-    # configure logging
-    logging.getLogger('requests').setLevel(logging.WARNING)
-    if config[ConfigConstants.VERBOSE]:
-        logging.basicConfig(level=logging.DEBUG, format='%(message)s')
-    else:
-        logging.basicConfig(level=logging.INFO, format='%(message)s')
-
-    # check if access log exists
-    if not os.path.isfile(config[ConfigConstants.LOGFILE]):
-        logging.error('log file ' + config[ConfigConstants.LOGFILE] + ' does not exist!')
-        sys.exit(1)
-
-    # check if host is configured
-    if not config[ConfigConstants.HOST]:
-        logging.error('Host is not configured!')
-        sys.exit(1)
-
-    # initialize worker objects
+def read_access_log(config, url_queue):
+    # initialize parser
     parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
-    url_queue = multiprocessing.Queue(config[ConfigConstants.WORKERCOUNT] * 10)
-    url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
-    if config.has_key(ConfigConstants.FILTER):
-        url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
-    else:
-        url_filter = URLFilter({})
-
-    # general information
-    print_infos(config[ConfigConstants.LOGFILE])
-
-    # initialize result queue
-    result_queue = multiprocessing.Queue()
-
-    # initialize and start threads
-    for i in range(config[ConfigConstants.WORKERCOUNT]):
-        name = 'Worker ' + str(i + 1)
-        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
-                            pause_time=config[ConfigConstants.DELAY],
-                            allow_cookies=config[ConfigConstants.ALLOW_COOKIES])
-        worker_list.append(worker)
-        worker.start()
 
     first_line = True
 
@@ -151,6 +99,96 @@ def main():
         except:
             logging.error('Unable to parse %s: %s', line, sys.exc_info())
 
+
+def main():
+    # configure simple logging
+    init_simple_logger()
+
+    # register signal handler
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # parse command line args
+    parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
+    parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
+    parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
+    parser.add_argument('-n', dest=ConfigConstants.WORKERCOUNT, type=int, help='Concurrency level', default=1,
+                        required=False)
+    parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
+                        required=False)
+    parser.add_argument('--delay', dest=ConfigConstants.DELAY, type=int,
+                        help='Delay between requests in milliseconds', default=0,
+                        required=False)
+    parser.add_argument('--timed', dest=ConfigConstants.TIMED, help='Rebuild request timings from original log',
+                        action='store_true')
+    parser.add_argument('--no-cookies', dest=ConfigConstants.ALLOW_COOKIES, help='Disallow cookies',
+                        action='store_false')
+    parser.add_argument('--ramp-up', dest=ConfigConstants.RAMP_UP, type=int, help='Duration of ramp-up phase',
+                        default=0)
+    parser.set_defaults(timed=False)
+    args = vars(parser.parse_args())
+
+    # read config file
+    config_reader = ConfigReader(args[ConfigConstants.CONFIGFILE])
+    config_reader.merge_dict(args)
+    config = config_reader.config
+
+    # configure logging
+    logging.getLogger('requests').setLevel(logging.WARNING)
+    if config[ConfigConstants.VERBOSE]:
+        logging.basicConfig(level=logging.DEBUG, format='[%(asctime)s] %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+    else:
+        logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s')
+
+    # check if access log exists
+    if not os.path.isfile(config[ConfigConstants.LOGFILE]):
+        print('log file %s does not exist!' % config[ConfigConstants.LOGFILE])
+        sys.exit(1)
+
+    # check if host is configured
+    if not config[ConfigConstants.HOST]:
+        print('Host is not configured!')
+        sys.exit(1)
+
+    # initialize worker objects
+    url_queue = multiprocessing.Queue(config[ConfigConstants.WORKERCOUNT] * 10)
+    url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
+    if config.has_key(ConfigConstants.FILTER):
+        url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
+    else:
+        url_filter = URLFilter({})
+
+    # general information
+    print_infos()
+
+    # start reading access log
+    now = datetime.now()
+    logging.info('Replaying %s (be patient)...', config[ConfigConstants.LOGFILE])
+    thread = Thread(target=read_access_log, args=(config, url_queue,))
+    thread.start()
+
+    # initialize result queue
+    result_queue = multiprocessing.Queue()
+
+    # calculate ramp up interval
+    if config[ConfigConstants.RAMP_UP] > 0 and config[ConfigConstants.WORKERCOUNT] > 1:
+        ramp_up_interval = config[ConfigConstants.RAMP_UP] / float(config[ConfigConstants.WORKERCOUNT] - 1)
+    else:
+        ramp_up_interval = 0
+
+    # initialize and start threads
+    for i in range(config[ConfigConstants.WORKERCOUNT]):
+        name = 'Worker ' + str(i + 1)
+        worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
+                            pause_time=config[ConfigConstants.DELAY],
+                            allow_cookies=config[ConfigConstants.ALLOW_COOKIES])
+        worker_list.append(worker)
+        worker.start()
+        if ramp_up_interval > 0:
+            time.sleep(ramp_up_interval)
+
+    # wait for reading access log
+    thread.join()
+
     # signal exit to all workers
     map(lambda w: w.exit(), worker_list)
 
@@ -163,8 +201,8 @@ def main():
         result += result_queue.get_nowait()
 
     now = datetime.now()
-    logging.info('[%s] Done', now.strftime('%d/%m/%Y %H:%M:%S'))
-    logging.info('')
+    logging.info('Done')
+    logging.shutdown()
 
     # print results
     print_results(config, result)
