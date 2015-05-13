@@ -7,13 +7,8 @@ import logging
 import signal
 import sys
 import os.path
-from datetime import datetime
 import time
 import multiprocessing
-from threading import Thread
-from Queue import Full
-
-import apachelog
 
 import replayer
 from replayer.config_reader import ConfigReader
@@ -22,11 +17,12 @@ from replayer.url_filter import URLFilter
 from replayer.url_builder import URLBuilder
 from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
-
+from replayer.log_worker import LogWorker
 
 
 # global variables
 worker_list = []
+thread_list = []
 killed = False
 
 
@@ -47,6 +43,7 @@ def signal_handler(signal, frame):
     logging.info('[%s] SIGINT received. Stopping...', multiprocessing.current_process().name)
     global killed
     killed = True
+    map(lambda t: t.kill(), thread_list)
     map(lambda w: w.kill(), worker_list)
 
 
@@ -62,43 +59,6 @@ def print_results(config, inspector):
     logging.getLogger('simple').info('Host:\t\t\t%s', config[ConfigConstants.HOST])
     logging.getLogger('simple').info('')
     logging.getLogger('simple').info(inspector)
-
-
-def parse_datetime(data):
-    log_time, zone = data.split()
-    log_time = log_time.translate(None, "[]")
-    return datetime.strptime(log_time, '%d/%b/%Y:%H:%M:%S')
-
-
-def read_access_log(config, url_queue):
-    # initialize parser
-    parser = apachelog.parser(config[ConfigConstants.LOGFORMAT])
-
-    first_line = True
-
-    # read access log
-    for line in open(config[ConfigConstants.LOGFILE]):
-        if killed:
-            break
-        try:
-            data = parser.parse(line)
-
-            if config[ConfigConstants.TIMED]:
-                if first_line:
-                    first_line = False
-                    last_date = int(parse_datetime(data['%t']).strftime('%s'))
-                else:
-                    current_date = int(parse_datetime(data['%t']).strftime('%s'))
-                    wait_time = current_date - last_date
-                    if wait_time > 0:
-                        last_date = current_date
-                        time.sleep(wait_time)
-
-            url_queue.put(data, True, 2)
-        except Full:
-            logging.error('Queue is full')
-        except:
-            logging.error('Unable to parse %s: %s', line, sys.exc_info())
 
 
 def main():
@@ -163,9 +123,10 @@ def main():
     print_infos()
 
     # start reading access log
-    now = datetime.now()
     logging.info('Replaying %s (be patient)...', config[ConfigConstants.LOGFILE])
-    thread = Thread(target=read_access_log, args=(config, url_queue,))
+    thread = LogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue,
+                       config[ConfigConstants.TIMED])
+    thread_list.append(thread)
     thread.start()
 
     # initialize result queue
@@ -188,14 +149,14 @@ def main():
         if ramp_up_interval > 0:
             time.sleep(ramp_up_interval)
 
-    # wait for reading access log
-    thread.join()
-
     # signal exit to all workers
     map(lambda w: w.exit(), worker_list)
 
     # join all workers
     map(lambda w: w.join(), worker_list)
+
+    # join all threads
+    map(lambda t: t.join(), thread_list)
 
     # sum up the results
     result = Inspector()

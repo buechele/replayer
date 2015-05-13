@@ -53,7 +53,7 @@ class HTTPWorker(Process):
                 sleep(self.__pause_time / 1000.0)
 
         self.__result_queue.put(self.inspector)
-        logging.debug('[%s] Stopping worker ', self.name)
+        logging.debug('[%s] Worker finished', self.name)
 
     def exit(self):
         self.__exit.set()
