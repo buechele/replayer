@@ -18,12 +18,13 @@ from replayer.url_builder import URLBuilder
 from replayer.config_constants import ConfigConstants
 from replayer.inspector import Inspector
 from replayer.log_worker import LogWorker
+from replayer.timed_log_worker import TimedLogWorker
 
 
 # global variables
 worker_list = []
 thread_list = []
-killed = False
+kill_event = multiprocessing.Event()
 
 
 def init_simple_logger():
@@ -41,10 +42,7 @@ def init_simple_logger():
 # signal handler to handle ctrl-c
 def signal_handler(signal, frame):
     logging.info('[%s] SIGINT received. Stopping...', multiprocessing.current_process().name)
-    global killed
-    killed = True
-    map(lambda t: t.kill(), thread_list)
-    map(lambda w: w.kill(), worker_list)
+    kill_event.set()
 
 
 def print_infos():
@@ -124,8 +122,11 @@ def main():
 
     # start reading access log
     logging.info('Replaying %s (be patient)...', config[ConfigConstants.LOGFILE])
-    thread = LogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue,
-                       config[ConfigConstants.TIMED])
+    if config[ConfigConstants.TIMED]:
+        thread = TimedLogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue,
+                                kill_event)
+    else:
+        thread = LogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue, kill_event)
     thread_list.append(thread)
     thread.start()
 
@@ -142,6 +143,7 @@ def main():
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
+                            kill_event,
                             pause_time=config[ConfigConstants.DELAY],
                             allow_cookies=config[ConfigConstants.ALLOW_COOKIES])
         worker_list.append(worker)
@@ -149,14 +151,14 @@ def main():
         if ramp_up_interval > 0:
             time.sleep(ramp_up_interval)
 
+    # join all threads
+    map(lambda t: t.join(), thread_list)
+
     # signal exit to all workers
     map(lambda w: w.exit(), worker_list)
 
     # join all workers
     map(lambda w: w.join(), worker_list)
-
-    # join all threads
-    map(lambda t: t.join(), thread_list)
 
     # sum up the results
     result = Inspector()

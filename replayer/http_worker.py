@@ -9,8 +9,9 @@ import requests
 from inspector import Inspector
 from block_cookie_policy import BlockCookiePolicy
 
+
 class HTTPWorker(Process):
-    def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, pause_time=0,
+    def __init__(self, name, headers, request_queue, url_filter, url_builder, result_queue, kill_event, pause_time=0,
                  allow_cookies=True):
         Process.__init__(self, name=name)
         self.__request_queue = request_queue
@@ -18,7 +19,7 @@ class HTTPWorker(Process):
         self.__url_builder = url_builder
         self.__pause_time = pause_time
         self.__exit = Event()
-        self.__killed = Event()
+        self.__kill_event = kill_event
         self.__result_queue = result_queue
         self.inspector = Inspector()
         self.__session = requests.Session()
@@ -40,7 +41,7 @@ class HTTPWorker(Process):
 
     def run(self):
         logging.debug('[%s] Starting worker', self.name)
-        while (not self.__killed.is_set()) and (not self.__exit.is_set() or (not self.__request_queue.empty())):
+        while (not self.__kill_event.is_set()) and (not self.__exit.is_set() or (not self.__request_queue.empty())):
             try:
                 data = self.__request_queue.get(True, 0.5)
                 if self.__url_filter.proceed(data):
@@ -57,6 +58,3 @@ class HTTPWorker(Process):
 
     def exit(self):
         self.__exit.set()
-
-    def kill(self):
-        self.__killed.set()
