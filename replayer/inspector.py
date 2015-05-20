@@ -56,17 +56,17 @@ class Inspector(object):
 
         logging.error('[%s] Request %s failed with reason %s', thread_name, url, str(reason))
 
-    def inspect_succeed(self, thread_name, url, log_data, response, elapsed_time):
+    def inspect_succeed(self, thread_name, url, log_entry, response, elapsed_time):
         self.__count += 1
 
         code = str(response.status_code)
-        if code == log_data[LogConstants.STATUSCODE]:
+        if code == log_entry[LogConstants.STATUSCODE]:
             self.__status_match += 1
 
         content = response.text
         length = len(content)
         self.__size += length
-        if str(length) == log_data[LogConstants.BYTES]:
+        if str(length) == log_entry[LogConstants.BYTES]:
             self.__length_match += 1
 
         self.__elapsed_time += elapsed_time

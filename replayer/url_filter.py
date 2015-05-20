@@ -8,9 +8,9 @@ class URLFilter(object):
         self.__methods = allow[ConfigConstants.METHODS] if allow.has_key(ConfigConstants.METHODS) else {}
         self.__logic = logic
 
-    def __check_methods(self, request_data):
+    def __check_methods(self, log_entry):
         if self.__methods:
-            request_line = request_data[LogConstants.REQUESTLINE]
+            request_line = log_entry[LogConstants.REQUESTLINE]
             for method in self.__methods:
                 if request_line.startswith(method + ' '):
                     return True
@@ -18,17 +18,17 @@ class URLFilter(object):
         else:
             return True
 
-    def __check_status(self, request_data):
+    def __check_status(self, log_entry):
         if self.__status:
-            status_code = request_data[LogConstants.STATUSCODE]
+            status_code = log_entry[LogConstants.STATUSCODE]
             if status_code in self.__status:
                 return True
             return False
         else:
             return True
 
-    def proceed(self, request_data):
-        result = self.__check_methods(request_data) and self.__check_status(request_data)
+    def proceed(self, log_entry):
+        result = self.__check_methods(log_entry) and self.__check_status(log_entry)
         if self.__logic:
             return result
         else:

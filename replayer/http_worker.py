@@ -27,8 +27,8 @@ class HTTPWorker(Process):
         if not allow_cookies:
             self.__session.cookies.set_policy(BlockCookiePolicy())
 
-    def __request(self, data):
-        url = self.__url_builder.build(data)
+    def __request(self, log_entry):
+        url = self.__url_builder.build(log_entry)
         try:
             start_request = datetime.datetime.now()
             response = self.__session.get(url)
@@ -37,7 +37,7 @@ class HTTPWorker(Process):
         except requests.RequestException as e:
             self.inspector.inspect_fail(self.name, url, str(e.message))
         else:
-            self.inspector.inspect_succeed(self.name, url, data, response, elapsed_time)
+            self.inspector.inspect_succeed(self.name, url, log_entry, response, elapsed_time)
 
     def run(self):
         logging.debug('[%s] Starting worker', self.name)
