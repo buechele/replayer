@@ -8,7 +8,6 @@ class URLBuilder(object):
         self.__protocol = protocol
         self.__host = host
         self.__port = port
-        self.__url_prefix = protocol + '://' + host
         self.__regex_list = regex_list
         self.__fix_host_regex = re.compile('^http://[^/]*')
 
@@ -27,7 +26,11 @@ class URLBuilder(object):
         # check and fix broken request paths
         request_path = self.__fix_common_problems(request_line[1])
 
-        url = self.__url_prefix + request_path
+        # build url
+        url = self.__protocol + '://' + self.__host + request_path
+
+        # transform url
         for regex_tuple in self.__regex_list:
             url = regex_tuple[0].sub(regex_tuple[1], url)
+
         return url
