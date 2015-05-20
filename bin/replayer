@@ -139,7 +139,7 @@ def main():
     else:
         ramp_up_interval = 0
 
-    # initialize and start threads
+    # initialize and start worker processes
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,

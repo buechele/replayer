@@ -1,6 +1,7 @@
 import time
 from datetime import datetime
 
+from log_constants import LogConstants
 from log_worker import LogWorker
 
 
@@ -19,9 +20,9 @@ class TimedLogWorker(LogWorker):
     def _process_data(self, data):
         if self.__first_line:
             self.__first_line = False
-            self.__last_date = int(self.__parse_datetime(data['%t']).strftime('%s'))
+            self.__last_date = int(self.__parse_datetime(data[LogConstants.TIME]).strftime('%s'))
         else:
-            current_date = int(self.__parse_datetime(data['%t']).strftime('%s'))
+            current_date = int(self.__parse_datetime(data[LogConstants.TIME]).strftime('%s'))
             wait_time = current_date - self.__last_date
             if wait_time > 0:
                 self.__last_date = current_date
