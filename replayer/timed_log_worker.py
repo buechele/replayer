@@ -6,8 +6,8 @@ from log_worker import LogWorker
 
 
 class TimedLogWorker(LogWorker):
-    def __init__(self, log_format, log_file, log_queue, kill_event):
-        super(TimedLogWorker, self).__init__(log_format, log_file, log_queue, kill_event)
+    def __init__(self, log_format, log_file, log_queue):
+        super(TimedLogWorker, self).__init__(log_format, log_file, log_queue)
         self.__first_line = True
         self.__last_date = None
 

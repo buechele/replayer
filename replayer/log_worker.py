@@ -6,12 +6,20 @@ import apachelog
 
 
 class LogWorker(Thread):
-    def __init__(self, log_format, log_file, log_queue, kill_event):
+    def __init__(self, log_format, log_file, log_queue):
         Thread.__init__(self, name='Log Reader')
-        self.__kill_event = kill_event
+        self.__kill_event = None
         self.__parser = apachelog.parser(log_format)
         self.__log_file = log_file
         self.__log_queue = log_queue
+
+    @property
+    def kill_event(self):
+        return self.__kill_event
+
+    @kill_event.setter
+    def kill_event(self, kill_event):
+        self.__kill_event = kill_event
 
     def __queue_data(self, log_entry):
         while not self.__kill_event.is_set():
@@ -27,7 +35,7 @@ class LogWorker(Thread):
 
     def run(self):
         for line in open(self.__log_file):
-            if self.__kill_event.is_set():
+            if self.__kill_event and self.__kill_event.is_set():
                 break
 
             try:

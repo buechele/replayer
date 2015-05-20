@@ -123,10 +123,10 @@ def main():
     # start reading access log
     logging.info('Replaying %s (be patient)...', config[ConfigConstants.LOGFILE])
     if config[ConfigConstants.TIMED]:
-        thread = TimedLogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue,
-                                kill_event)
+        thread = TimedLogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue)
     else:
-        thread = LogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue, kill_event)
+        thread = LogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue)
+    thread.kill_event = kill_event
     thread_list.append(thread)
     thread.start()
 
@@ -143,9 +143,9 @@ def main():
     for i in range(config[ConfigConstants.WORKERCOUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
-                            kill_event,
                             pause_time=config[ConfigConstants.DELAY],
                             allow_cookies=config[ConfigConstants.ALLOW_COOKIES])
+        worker.kill_event = kill_event
         worker_list.append(worker)
         worker.start()
         if ramp_up_interval > 0:
