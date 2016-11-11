@@ -14,7 +14,7 @@ setup(name='replayer',
       scripts=['bin/replayer'],
       install_requires=[
           'apachelog',
-          'requests>=2.6.0',
+          'requests>=2.11.1',
           'hurry.filesize',
       ],
       platforms='any',
