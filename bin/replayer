@@ -69,8 +69,8 @@ def main():
     # parse command line args
     parser = argparse.ArgumentParser(description='Replay an Apache access-log.')
     parser.add_argument('-f', dest=ConfigConstants.LOGFILE, help='Apache access.log', required=True)
-    parser.add_argument('-c', dest=ConfigConstants.CONFIGFILE, help='Configuration file to use', required=False)
-    parser.add_argument('-n', dest=ConfigConstants.WORKERCOUNT, type=int, help='Concurrency level', default=1,
+    parser.add_argument('-c', dest=ConfigConstants.CONFIG_FILE, help='Configuration file to use', required=False)
+    parser.add_argument('-n', dest=ConfigConstants.WORKER_COUNT, type=int, help='Concurrency level', default=1,
                         required=False)
     parser.add_argument('-v', dest=ConfigConstants.VERBOSE, help='Increase output verbosity', action='store_true',
                         required=False)
@@ -88,7 +88,7 @@ def main():
     args = vars(parser.parse_args())
 
     # read config file
-    config_reader = ConfigReader(args[ConfigConstants.CONFIGFILE])
+    config_reader = ConfigReader(args[ConfigConstants.CONFIG_FILE])
     config_reader.merge_dict(args)
     config = config_reader.config
 
@@ -110,10 +110,10 @@ def main():
         sys.exit(1)
 
     # initialize worker objects
-    url_queue = multiprocessing.Queue(config[ConfigConstants.WORKERCOUNT] * 10)
+    url_queue = multiprocessing.Queue(config[ConfigConstants.WORKER_COUNT] * 10)
     url_builder = URLBuilder('http', config[ConfigConstants.HOST], 80, config[ConfigConstants.TRANSFORM])
     if config.has_key(ConfigConstants.FILTER):
-        url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTERRULE])
+        url_filter = URLFilter(config[ConfigConstants.FILTER], config[ConfigConstants.FILTER_RULE])
     else:
         url_filter = URLFilter({})
 
@@ -123,9 +123,9 @@ def main():
     # start reading access log
     logging.info('Replaying %s (be patient)...', config[ConfigConstants.LOGFILE])
     if config[ConfigConstants.TIMED]:
-        thread = TimedLogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue)
+        thread = TimedLogWorker(config[ConfigConstants.LOG_FORMAT], config[ConfigConstants.LOGFILE], url_queue)
     else:
-        thread = LogWorker(config[ConfigConstants.LOGFORMAT], config[ConfigConstants.LOGFILE], url_queue)
+        thread = LogWorker(config[ConfigConstants.LOG_FORMAT], config[ConfigConstants.LOGFILE], url_queue)
     thread.kill_event = kill_event
     thread_list.append(thread)
     thread.start()
@@ -134,13 +134,13 @@ def main():
     result_queue = multiprocessing.Queue()
 
     # calculate ramp up interval
-    if config[ConfigConstants.RAMP_UP] > 0 and config[ConfigConstants.WORKERCOUNT] > 1:
-        ramp_up_interval = config[ConfigConstants.RAMP_UP] / float(config[ConfigConstants.WORKERCOUNT] - 1)
+    if config[ConfigConstants.RAMP_UP] > 0 and config[ConfigConstants.WORKER_COUNT] > 1:
+        ramp_up_interval = config[ConfigConstants.RAMP_UP] / float(config[ConfigConstants.WORKER_COUNT] - 1)
     else:
         ramp_up_interval = 0
 
     # initialize and start worker processes
-    for i in range(config[ConfigConstants.WORKERCOUNT]):
+    for i in range(config[ConfigConstants.WORKER_COUNT]):
         name = 'Worker ' + str(i + 1)
         worker = HTTPWorker(name, config[ConfigConstants.HEADER], url_queue, url_filter, url_builder, result_queue,
                             pause_time=config[ConfigConstants.DELAY],

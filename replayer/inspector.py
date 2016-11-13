@@ -60,7 +60,7 @@ class Inspector(object):
         self.__count += 1
 
         code = str(response.status_code)
-        if code == log_entry[LogConstants.STATUSCODE]:
+        if code == log_entry[LogConstants.STATUS_CODE]:
             self.__status_match += 1
 
         content = response.text

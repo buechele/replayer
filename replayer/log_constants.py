@@ -1,5 +1,5 @@
 class LogConstants(object):
-    REQUESTLINE = '%r'
-    STATUSCODE = '%s'
     BYTES = '%b'
+    REQUEST_LINE = '%r'
+    STATUS_CODE = '%s'
     TIME = '%t'

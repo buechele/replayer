@@ -10,7 +10,7 @@ class URLFilter(object):
 
     def __check_methods(self, log_entry):
         if self.__methods:
-            request_line = log_entry[LogConstants.REQUESTLINE]
+            request_line = log_entry[LogConstants.REQUEST_LINE]
             for method in self.__methods:
                 if request_line.startswith(method + ' '):
                     return True
@@ -20,7 +20,7 @@ class URLFilter(object):
 
     def __check_status(self, log_entry):
         if self.__status:
-            status_code = log_entry[LogConstants.STATUSCODE]
+            status_code = log_entry[LogConstants.STATUS_CODE]
             if status_code in self.__status:
                 return True
             return False

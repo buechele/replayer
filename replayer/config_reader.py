@@ -19,7 +19,7 @@ class ConfigReader(object):
         cfgparser = ConfigParser.SafeConfigParser()
         cfgparser.optionxform = str
         cfgparser.read(config_file)
-        self.__copy_value(cfgparser, 'General', 'LogFormat', ConfigConstants.LOGFORMAT, True)
+        self.__copy_value(cfgparser, 'General', 'LogFormat', ConfigConstants.LOG_FORMAT, True)
         self.__copy_value(cfgparser, 'General', 'Host', ConfigConstants.HOST)
         self.__read_filter(cfgparser, ConfigConstants.FILTER)
         self.config[ConfigConstants.HEADER] = self.__read_dict(cfgparser, 'Header')
@@ -49,9 +49,9 @@ class ConfigReader(object):
         if config.has_section(section):
             cfg = {}
             for option in config.options(section):
-                if option == ConfigConstants.FILTERRULE:
+                if option == ConfigConstants.FILTER_RULE:
                     value = config.get(section, option).strip().lower()
-                    self.config[ConfigConstants.FILTERRULE] = not value == 'disallow'
+                    self.config[ConfigConstants.FILTER_RULE] = not value == 'disallow'
                 else:
                     values = config.get(section, option).split(',')
                     cfg[option] = filter(None, map(str.strip, values))

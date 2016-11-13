@@ -18,10 +18,10 @@ class URLBuilder(object):
             return request_line
 
     def build(self, log_entry):
-        request_line = log_entry[LogConstants.REQUESTLINE].split(' ')
+        request_line = log_entry[LogConstants.REQUEST_LINE].split(' ')
 
         if len(request_line) < 2:
-            raise IOError('Ignoring request line %s', log_entry[LogConstants.REQUESTLINE])
+            raise IOError('Ignoring request line %s', log_entry[LogConstants.REQUEST_LINE])
 
         # check and fix broken request paths
         request_path = self.__fix_common_problems(request_line[1])
